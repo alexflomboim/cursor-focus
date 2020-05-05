@@ -49,5 +49,9 @@
   },
   "files": [
     "dist"
-  ]
+  ],
+  "dependencies": {
+    "mobx": "^5.15.4",
+    "mobx-react": "^6.2.2"
+  }
 }

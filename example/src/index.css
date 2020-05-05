@@ -12,3 +12,14 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.btn {
+  width: 200px;
+  height: 100px;
+  background: burlywood;
+  margin: 5px;
+}
+
+.btn.focused {
+  border: 3px solid red;
+}
