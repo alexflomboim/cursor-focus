@@ -1,7 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 
-module.exports = function focusable(WrappedComponent, focusLayers, Store) {
+function focusable(WrappedComponent, focusLayers, Store) {
   class Focusable extends React.Component {
     constructor(props) {
       super(props);
@@ -67,3 +67,5 @@ module.exports = function focusable(WrappedComponent, focusLayers, Store) {
 
   return Focusable;
 }
+
+export default focusable;

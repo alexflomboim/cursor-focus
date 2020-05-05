@@ -207,4 +207,4 @@ class StoreFocusBase {
   }
 }
 
-module.exports = StoreFocusBase;
+export default StoreFocusBase;
