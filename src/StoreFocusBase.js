@@ -53,6 +53,10 @@ export class StoreFocusBase {
   disableFocus() {this.focusEnabled = false;}
   enableFocus() {this.focusEnabled = true;}
 
+  /**
+   * Используется из обработчика мыши в focusable-компоненте. Предназначена для установки фокуса на конкретный компонент
+   * @param component
+   */
   setCurrentFocusedByComponent(component) {
     let focusLayer = this.focusLayers[this.currentFocusLayer];
     for(let i=0;i<focusLayer.length;i++) {
@@ -67,8 +71,9 @@ export class StoreFocusBase {
     //снимаем фокус с предыдущего
     if(this.currentFocused !== null)    this.currentFocused.setUnFocused();
 
-    if(el === null)
-      el = this._findDefaultFocused();
+    // если передан null - это дефолтовая фокусировка после смены фокусного слоя.
+    // Находим компонент, обозначенный как дефолтовый для фокуса в этом слое и фокусим его
+    if(el === null) el = this._findDefaultFocused();
 
     //меняем элемент
     this.currentFocused = el;
@@ -78,16 +83,31 @@ export class StoreFocusBase {
     if(this.currentFocused !== null)    this.currentFocused.setFocused();
   }
 
+  /**
+   * Возвращает последний фокушенный элемент в указанном слое.
+   * @param layer
+   * @returns {null}
+   */
   getLayerFocused(layer) {
     let t = this.lastLayersFocuses[layer];
     if(typeof t === "undefined") return null;
     return t;
   }
 
-  addToFocusLayer(focusLayer, obj) {
-    this.focusLayers[focusLayer].push(obj);
+  /**
+   * Добавляет компонент в указанный слой. Используется в componentDidMount focusable HOC
+   * @param focusLayer
+   * @param obj
+   */
+  addToFocusLayer(focusLayer, component) {
+    this.focusLayers[focusLayer].push(component);
   }
 
+  /**
+   * Удаляет компонент из указанного слоя. Используется в componentWillUnmount focusable HOC
+   * @param focusLayer
+   * @param component
+   */
   removeFromFocusLayer(focusLayer, component) {
     //Если удаляется текущий зафокушенный - сбрасываем фокус
     if(this.currentFocused === component) {
@@ -102,10 +122,16 @@ export class StoreFocusBase {
     }
   }
 
+  /**
+   * В зависимости от направления - находит наилучший компонент для фокуса и фокусит его. Если компонент не найден -
+   * вызывает опциональную функцию для переходов между слоями
+   * @param direction
+   */
   moveFocus(direction) {
 
     if(!this.focusEnabled) return;
 
+    // берем все компоненты из текущего фокусного слоя
     let components = this.focusLayers[this.currentFocusLayer];
 
     let found = {
@@ -120,10 +146,12 @@ export class StoreFocusBase {
       currentFocusedY = Math.floor(rect.top + (rect.bottom - rect.top) * 0.5);
     }
 
+    // проходим по всем кандидатам
     components.map(c => {
 
       if(!c.focusable())    return;
 
+      // рассчитываем центр кандидата и расстояние от центра текущего фокуса до центра кандидата
       let rect = c.getDomRef().getBoundingClientRect();
       c.x = Math.floor(rect.left + (rect.right - rect.left) * 0.5);
       c.y = Math.floor(rect.top + (rect.bottom - rect.top) * 0.5);
@@ -194,11 +222,20 @@ export class StoreFocusBase {
     if(found.candidate !== null) {
       this.setCurrentFocused(found.candidate);
     } else {
+      // Если не найден подходящий для перехода фокуса узел -
+      // здесь вызывается фнукия, которая может быть определена в классе-наслединке
+      // В ней можно определить поведение в таких ситуациях
       if(typeof this.emptyFocusDirectionAction === "function")
         this.emptyFocusDirectionAction(direction);
     }
   }
 
+  /**
+   * Устанавливает новый активный слой. Второй параметр определяет, какой фокусный элемент этого слоя будет зафокушен по-умолчанию:
+   * дефолтовый или последний зафокушенный
+   * @param newValue
+   * @param defaultFocus
+   */
   setFocusLayer(newValue = null, defaultFocus = FOCUS_LAYER_DEFAULT_FOCUS.DEFAULT) {
     console.log('setFocusLayer ', newValue);
 
