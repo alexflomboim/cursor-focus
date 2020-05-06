@@ -15,6 +15,10 @@ function eventFire(el, etype){
   }
 }
 
+function getRandomInt(max) {
+  return Math.floor(Math.random() * Math.floor(max));
+}
+
 const App = () => {
   document.addEventListener('keydown', function(e){
     if(e.code === 'ArrowUp')        StoreFocus.moveFocus(0);
@@ -26,9 +30,13 @@ const App = () => {
     }
   });
 
+  let items = [], n=15;
+  for(let i=0;i<n;i++) {
+    items.push(<TestComponent pos={{left: getRandomInt(1280), top: getRandomInt(720)}}/>);
+  }
+
   return <div>
-    <TestComponent/>
-    <TestComponent/>
+    {items}
   </div>
 }
 

@@ -20,7 +20,7 @@ const TestComponent = focusable(class TestComponent extends React.Component {
     console.log('render MenuButton');
 
     return (
-      <div className={"btn " + (this.props.focused ? " focused" : "")} onClick={() => this.onClick()}></div>
+      <div style={this.props.pos} className={"btn " + (this.props.focused ? " focused" : "")} onClick={() => this.onClick()}></div>
     );
   }
 }, StoreFocus)

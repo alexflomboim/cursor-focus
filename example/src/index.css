@@ -14,10 +14,11 @@ code {
 }
 
 .btn {
+  position: absolute;
   width: 200px;
-  height: 100px;
+  height: 70px;
   background: burlywood;
-  margin: 5px;
+  border: 2px solid antiquewhite;
 }
 
 .btn.focused {
