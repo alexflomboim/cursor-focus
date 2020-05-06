@@ -28,6 +28,8 @@ export class StoreFocusBase {
       this.setFocusLayer(defaultLayerKey);
     } else
       fLayers.map(fl => this.focusLayers[fl] = []);
+
+
   }
 
   /**
@@ -202,15 +204,11 @@ export class StoreFocusBase {
 
     this.currentFocusLayer = newValue;
 
-    //при фокусировке после переключения слоя - делаем небольшую задержку чтобы сфокусировать внимание юзера
-    setTimeout(() => {
-      if (defaultFocus === FOCUS_LAYER_DEFAULT_FOCUS.SAVED) {
-        this.setCurrentFocused(this.getLayerFocused(this.currentFocusLayer));
-      } else if (defaultFocus === FOCUS_LAYER_DEFAULT_FOCUS.DEFAULT) {
-        this.setCurrentFocused(null);
-        //this.moveFocus(2);
-      }
-    }, 500);
+    if (defaultFocus === FOCUS_LAYER_DEFAULT_FOCUS.SAVED) {
+      this.setCurrentFocused(this.getLayerFocused(this.currentFocusLayer));
+    } else if (defaultFocus === FOCUS_LAYER_DEFAULT_FOCUS.DEFAULT) {
+      this.setCurrentFocused(null);
+    }
   }
 
 
