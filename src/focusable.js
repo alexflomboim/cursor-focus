@@ -1,7 +1,7 @@
-import React from 'react'
-import ReactDOM from 'react-dom'
+import React from "react";
+import ReactDOM from 'react-dom';
 
-function focusable(WrappedComponent, focusLayers, Store) {
+function focusable (WrappedComponent, Store, focusLayers = null) {
   class Focusable extends React.Component {
     constructor(props) {
       super(props);
@@ -9,16 +9,23 @@ function focusable(WrappedComponent, focusLayers, Store) {
       this.componentRef = React.createRef();
       this.domRef = null;
 
+      this.focusLayers = [];
+
+      //если фокусные слои не переданы - добавляем объект в ВСЕ фокусные слои
+      if(focusLayers === null)    Object.keys(Store.focusLayers).map(fl => this.focusLayers.push(fl));
+      else                        focusLayers.map(fl => this.focusLayers.push(fl));
+
+
+
       this.state = {
         focused: false,
-
       };
     }
 
     onMouseEnter() {
       let ok = false;
-      for(let i=0;i<focusLayers.length;i++) {
-        if(Store.currentFocusLayer === focusLayers[i]) {
+      for(let i=0;i<this.length;i++) {
+        if(Store.currentFocusLayer === this.focusLayers[i]) {
           ok = true;
           break;
         }
@@ -46,15 +53,15 @@ function focusable(WrappedComponent, focusLayers, Store) {
       if(typeof component.defaultFocused !== "function")  component.defaultFocused = function() {return false}
 
       //добавляем компонент в соответствующие фокусные слои
-      for(let i=0;i<focusLayers.length;i++)   Store.addToFocusLayer(focusLayers[i], component);
+      for(let i=0;i<this.focusLayers.length;i++)   Store.addToFocusLayer(this.focusLayers[i], component);
 
       //назначем обработчик мыши
       this.componentRef.current.getDomRef().addEventListener('mouseover', () => this.onMouseEnter());
     }
 
     componentWillUnmount() {
-      for(let i=0;i<focusLayers.length;i++) {
-        Store.removeFromFocusLayer(focusLayers[i], this.componentRef.current);
+      for(let i=0;i<this.focusLayers.length;i++) {
+        Store.removeFromFocusLayer(this.focusLayers[i], this.componentRef.current);
       }
 
       this.componentRef.current.getDomRef().removeEventListener('mouseover', () => this.onMouseEnter());

@@ -4,10 +4,5 @@ import {extendObservable} from "mobx";
 
 
 
-export const FOCUS_LAYER_DEFAULT_FOCUS = {
-  DEFAULT: 0,
-  SAVED: 1
-};
-
 export {default as focusable} from './focusable';
-export {default as StoreFocusBase} from './StoreFocusBase';
+export {FOCUS_LAYER_DEFAULT_FOCUS, StoreFocusBase} from './StoreFocusBase';

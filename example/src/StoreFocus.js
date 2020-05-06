@@ -4,7 +4,7 @@ import { StoreFocusBase } from 'cursor-focus'
 class StoreFocus extends StoreFocusBase{
 
     constructor() {
-        super([1]);
+        super();
     }
 
 
