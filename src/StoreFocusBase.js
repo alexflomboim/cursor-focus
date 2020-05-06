@@ -1,4 +1,3 @@
-import {extendObservable} from "mobx";
 
 
 export const FOCUS_LAYER_DEFAULT_FOCUS = {
@@ -14,14 +13,13 @@ export class StoreFocusBase {
    * @param fLayers
    */
   constructor(fLayers = null) {
-    extendObservable(this, {
-      focusLayers: {}, // объект массивов - здесь содержаться фокусабельные объекты, входщие в каждый слов
-      currentFocusLayer: null, // активный фокусный слов
-      currentFocused: null, // активный зафокушенный объект
-      focusEnabled: true, // флаг активности фокуса вообще, если false - движения мыши или курсора не будут фокусить объекты
-      lastLayersFocuses: {}, // для каждого слоя здесь храним последний зафокушенный объект, для фокусировки его при возврате к слою
-    });
 
+    this.focusLayers = {}; // объект массивов - здесь содержаться фокусабельные объекты, входщие в каждый слов
+    this.currentFocusLayer = null; // активный фокусный слов
+    this.currentFocused = null; // активный зафокушенный объект
+    this.focusEnabled = true; // флаг активности фокуса вообще, если false - движения мыши или курсора не будут фокусить объекты
+    this.lastLayersFocuses = {}; // для каждого слоя здесь храним последний зафокушенный объект, для фокусировки его при возврате к слою
+    this.FOCUS_MIN_ANGLE_FOR_DISTANCE = Math.PI / 18;
 
     //если не переданы фокусные слои - создаем один, который будет дефолтовым и активным
     if(fLayers === null) {
@@ -30,8 +28,6 @@ export class StoreFocusBase {
       this.setFocusLayer(defaultLayerKey);
     } else
       fLayers.map(fl => this.focusLayers[fl] = []);
-
-    this.FOCUS_MIN_ANGLE_FOR_DISTANCE = Math.PI / 18;
   }
 
   /**
