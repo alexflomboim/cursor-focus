@@ -196,7 +196,8 @@ export class StoreFocusBase {
     if(found.candidate !== null) {
       this.setCurrentFocused(found.candidate);
     } else {
-      this.emptyFocusDirectionAction(direction);
+      if(typeof this.emptyFocusDirectionAction === "function")
+        this.emptyFocusDirectionAction(direction);
     }
   }
 
