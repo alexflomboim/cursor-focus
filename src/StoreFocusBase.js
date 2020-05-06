@@ -25,8 +25,9 @@ export class StoreFocusBase {
 
     //если не переданы фокусные слои - создаем один, который будет дефолтовым и активным
     if(fLayers === null) {
-      this.focusLayers[0] = [];
-      this.setFocusLayer(0);
+      let defaultLayerKey = "default";
+      this.focusLayers[defaultLayerKey] = [];
+      this.setFocusLayer(defaultLayerKey);
     } else
       fLayers.map(fl => this.focusLayers[fl] = []);
 

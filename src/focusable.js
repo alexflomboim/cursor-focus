@@ -24,7 +24,7 @@ function focusable (WrappedComponent, Store, focusLayers = null) {
 
     onMouseEnter() {
       let ok = false;
-      for(let i=0;i<this.length;i++) {
+      for(let i=0;i<this.focusLayers.length;i++) {
         if(Store.currentFocusLayer === this.focusLayers[i]) {
           ok = true;
           break;

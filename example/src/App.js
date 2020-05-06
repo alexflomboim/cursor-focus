@@ -26,8 +26,6 @@ const App = () => {
     }
   });
 
-  StoreFocus.setFocusLayer(1);
-
   return <div>
     <TestComponent/>
     <TestComponent/>
