@@ -30,11 +30,11 @@ class StoreFocus extends StoreFocusBase{
 
 ### 2. Все фокусабльные элементы выделить в отдельные классовые компоненты, и обернуть их в HOC focusable:
 ```jsx
-const Field = focusable(observer(class Field extends React.Component {
+const Field = focusable(class Field extends React.Component {
     constructor(props) {
         super(props);
     }
-}), StoreFocus)
+}, StoreFocus)
 
 ```
 Этот HOC имплементирует в компонент логику его фокусабельности. Признак присутствия фокуса передается в компоенент через **props.focused** (true/false)
