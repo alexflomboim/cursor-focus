@@ -1,7 +1,7 @@
 import React from 'react'
 
 import { ExampleComponent } from 'cursor-focus'
-import 'cursor-focus/dist/index.css'
+import './index.css'
 import TestComponent from './TestComponent'
 import StoreFocus from './StoreFocus'
 
