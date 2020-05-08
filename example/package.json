@@ -4,9 +4,6 @@
   "version": "0.0.0",
   "private": true,
   "dependencies": {
-    "react": "file:../node_modules/react",
-    "react-dom": "file:../node_modules/react-dom",
-    "react-scripts": "file:../node_modules/react-scripts",
     "cursor-focus": "file:.."
   },
   "scripts": {
