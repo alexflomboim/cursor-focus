@@ -44,26 +44,28 @@ function focusable (WrappedComponent, Store, focusLayers = null) {
     }
 
     componentDidMount() {
-      // вытягиваем реф на дом-узел компонента
-      this.domRef = ReactDOM.findDOMNode(this.componentRef.current);
 
-      // Дополняем компонент необходимым методами
+
       let component = this.componentRef.current;
-      Object.assign(component, {
-        setFocused: () => {this.setState({focused: true})},
-        setUnFocused: () => {this.setState({focused: false})},
-        getDomRef: () => {return this.domRef}
-      });
+
+      // вытягиваем реф на дом-узел компонента и учим его слушать мышь
+      this.domRef = ReactDOM.findDOMNode(component);
+      this.domRef.addEventListener('mouseover', this.onMouseEnter)
 
       //эти методы могут быть переопределены в компонентах
       if(typeof component.focusable !== "function")       component.focusable = function() {return true}
       if(typeof component.defaultFocused !== "function")  component.defaultFocused = function() {return false}
 
-      //добавляем компонент в соответствующие фокусные слои
-      for(let i=0;i<this.focusLayers.length;i++)   Store.addToFocusLayer(this.focusLayers[i], component);
+      let obj = {
+        component: component,
+        setFocused: () => {this.setState({focused: true})},
+        setUnFocused: () => {this.setState({focused: false})},
+        getDomRef: () => {return this.domRef}
+      }
 
-      //назначем обработчик мыши
-      this.componentRef.current.getDomRef().addEventListener('mouseover', this.onMouseEnter);
+      //добавляем компонент в соответствующие фокусные слои
+      for(let i=0;i<this.focusLayers.length;i++)   Store.addToFocusLayer(this.focusLayers[i], obj);
+
     }
 
     componentWillUnmount() {
@@ -72,7 +74,7 @@ function focusable (WrappedComponent, Store, focusLayers = null) {
         Store.removeFromFocusLayer(this.focusLayers[i], this.componentRef.current);
 
       // отвязываем обработчик мыши
-      this.componentRef.current.getDomRef().removeEventListener('mouseover', this.onMouseEnter);
+      this.domRef.removeEventListener('mouseover', this.onMouseEnter);
     }
 
     render() {

@@ -42,7 +42,7 @@ export class StoreFocusBase {
     let defaultFocused = null;
 
     this.focusLayers[this.currentFocusLayer].map(e => {
-      if(e.focusable() && e.defaultFocused())
+      if(e.component.focusable() && e.component.defaultFocused())
         defaultFocused = e;
     })
 
@@ -60,25 +60,25 @@ export class StoreFocusBase {
   setCurrentFocusedByComponent(component) {
     let focusLayer = this.focusLayers[this.currentFocusLayer];
     for(let i=0;i<focusLayer.length;i++) {
-      if(focusLayer[i] === component) {
+      if(focusLayer[i].component === component) {
         this.setCurrentFocused(focusLayer[i]);
         return;
       }
     }
   }
 
-  setCurrentFocused(el) {
+  setCurrentFocused(obj) {
     //снимаем фокус с предыдущего
     if(this.currentFocused !== null)    this.currentFocused.setUnFocused();
 
     // если передан null - это дефолтовая фокусировка после смены фокусного слоя.
     // Находим компонент, обозначенный как дефолтовый для фокуса в этом слое и фокусим его
-    if(el === null) el = this._findDefaultFocused();
+    if(obj === null) obj = this._findDefaultFocused();
 
     //меняем элемент
-    this.currentFocused = el;
+    this.currentFocused = obj;
     //запоминаем элемент в историю
-    this.lastLayersFocuses[this.currentFocusLayer] = el;
+    this.lastLayersFocuses[this.currentFocusLayer] = obj;
     //фокусим новый элемент
     if(this.currentFocused !== null)    this.currentFocused.setFocused();
   }
@@ -99,8 +99,8 @@ export class StoreFocusBase {
    * @param focusLayer
    * @param obj
    */
-  addToFocusLayer(focusLayer, component) {
-    this.focusLayers[focusLayer].push(component);
+  addToFocusLayer(focusLayer, obj) {
+    this.focusLayers[focusLayer].push(obj);
   }
 
   /**
@@ -110,13 +110,13 @@ export class StoreFocusBase {
    */
   removeFromFocusLayer(focusLayer, component) {
     //Если удаляется текущий зафокушенный - сбрасываем фокус
-    if(this.currentFocused === component) {
+    if(this.currentFocused !== null && this.currentFocused.component === component) {
       this.setCurrentFocused(null);
     }
 
     //Удаляем этот компонент из всех слоев
     for(let i=0;i<this.focusLayers[focusLayer].length;i++) {
-      if(this.focusLayers[focusLayer][i] === component) {
+      if(this.focusLayers[focusLayer][i].component === component) {
         this.focusLayers[focusLayer].splice(i, 1);
       }
     }
@@ -132,7 +132,7 @@ export class StoreFocusBase {
     if(!this.focusEnabled) return;
 
     // берем все компоненты из текущего фокусного слоя
-    let components = this.focusLayers[this.currentFocusLayer];
+    let objects = this.focusLayers[this.currentFocusLayer];
 
     let found = {
       candidate: null
@@ -147,16 +147,16 @@ export class StoreFocusBase {
     }
 
     // проходим по всем кандидатам
-    components.map(c => {
+    objects.map(obj => {
 
-      if(!c.focusable())    return;
+      if(!obj.component.focusable())    return;
 
       // рассчитываем центр кандидата и расстояние от центра текущего фокуса до центра кандидата
-      let rect = c.getDomRef().getBoundingClientRect();
-      c.x = Math.floor(rect.left + (rect.right - rect.left) * 0.5);
-      c.y = Math.floor(rect.top + (rect.bottom - rect.top) * 0.5);
-      let dx = c.x - currentFocusedX, dy = c.y - currentFocusedY;
-      c.distance = Math.sqrt(dx*dx + dy*dy);
+      let rect = obj.getDomRef().getBoundingClientRect();
+      obj.x = Math.floor(rect.left + (rect.right - rect.left) * 0.5);
+      obj.y = Math.floor(rect.top + (rect.bottom - rect.top) * 0.5);
+      let dx = obj.x - currentFocusedX, dy = obj.y - currentFocusedY;
+      obj.distance = Math.sqrt(dx*dx + dy*dy);
 
       let store = this;
       function check() {
@@ -167,16 +167,16 @@ export class StoreFocusBase {
           //console.log('c1');
         }
         else {
-          if(Math.abs(c.acos-found.candidate.acos) < store.FOCUS_MIN_ANGLE_FOR_DISTANCE) {
-            if (c.distance < found.candidate.distance) {
+          if(Math.abs(obj.acos-found.candidate.acos) < store.FOCUS_MIN_ANGLE_FOR_DISTANCE) {
+            if (obj.distance < found.candidate.distance) {
               flag = true;
               //console.log('c2');
             }
           } else {
-            if( c.cos > found.candidate.cos && c.distance < 2*found.candidate.distance) {
+            if( obj.cos > found.candidate.cos && obj.distance < 2*found.candidate.distance) {
               flag = true;
               //console.log('c3');
-            } else if( c.cos < found.candidate.cos && c.distance < 0.5*found.candidate.distance) {
+            } else if( obj.cos < found.candidate.cos && obj.distance < 0.5*found.candidate.distance) {
               flag = true;
               //console.log('c4');
             }
@@ -186,33 +186,33 @@ export class StoreFocusBase {
         if(flag) {
           /*console.log(c, found.candidate);
           console.log('OK', c.obj.node);*/
-          found.candidate = c;
+          found.candidate = obj;
         }
 
       }
 
       if(direction === 0) {
-        if(c.y < currentFocusedY) {
-          c.cos = Math.abs((c.y-currentFocusedY) / c.distance);
-          c.acos = Math.acos(c.cos);
+        if(obj.y < currentFocusedY) {
+          obj.cos = Math.abs((obj.y-currentFocusedY) / obj.distance);
+          obj.acos = Math.acos(obj.cos);
           check();
         }
       } else if(direction === 1) {
-        if(c.x > currentFocusedX) {
-          c.cos = Math.abs((c.x-currentFocusedX) / c.distance);
-          c.acos = Math.acos(c.cos);
+        if(obj.x > currentFocusedX) {
+          obj.cos = Math.abs((obj.x-currentFocusedX) / obj.distance);
+          obj.acos = Math.acos(obj.cos);
           check();
         }
       } else if(direction === 2) {
-        if(c.y > currentFocusedY) {
-          c.cos = Math.abs((c.y-currentFocusedY) / c.distance);
-          c.acos = Math.acos(c.cos);
+        if(obj.y > currentFocusedY) {
+          obj.cos = Math.abs((obj.y-currentFocusedY) / obj.distance);
+          obj.acos = Math.acos(obj.cos);
           check();
         }
       } else if(direction === 3) {
-        if(c.x < currentFocusedX) {
-          c.cos = Math.abs((c.x-currentFocusedX) / c.distance);
-          c.acos = Math.acos(c.cos);
+        if(obj.x < currentFocusedX) {
+          obj.cos = Math.abs((obj.x-currentFocusedX) / obj.distance);
+          obj.acos = Math.acos(obj.cos);
           check();
         }
       }
