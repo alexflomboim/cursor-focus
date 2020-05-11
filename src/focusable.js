@@ -35,7 +35,11 @@ function focusable (WrappedComponent, Store, focusLayers = null) {
         }
       }
 
+      // текущий слой - среди слоев этого компонента
       if(!ok) return;
+
+      // компонент знает, что не должен фокусится
+      if(!this.componentRef.current.focusable())  return;
 
       // проверяем, включен ли сейчас фообще фокус
       if(!Store.focusEnabled) return;
