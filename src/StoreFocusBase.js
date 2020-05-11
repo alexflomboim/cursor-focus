@@ -25,7 +25,7 @@ export class StoreFocusBase {
     this.currentFocused = null; // активный зафокушенный объект
     this.focusEnabled = true; // флаг активности фокуса вообще, если false - движения мыши или курсора не будут фокусить объекты
     this.lastLayersFocuses = {}; // для каждого слоя здесь храним последний зафокушенный объект, для фокусировки его при возврате к слою
-    this.FOCUS_MIN_ANGLE_FOR_DISTANCE = Math.PI / 18;
+    this.SEE_ANGLE_PRIORITY = Math.cos(120 / 180 * Math.PI);
 
     //если не переданы фокусные слои - создаем один, который будет дефолтовым и активным
     if(fLayers === null) {
@@ -128,6 +128,100 @@ export class StoreFocusBase {
     }
   }
 
+  __chooseNearestPoint(x, y, rect) {
+    let centerX = Math.floor(rect.left + (rect.right - rect.left) * 0.5),
+        centerY = Math.floor(rect.top + (rect.bottom - rect.top) * 0.5);
+
+    let nearestCornerX = 0, nearestCornerY = 0;
+
+    if(x <= centerX) {
+      if(y <= centerY)  return {x: rect.left, y: rect.top, corner: 0};
+      else              return {x: rect.left, y: rect.bottom, corner: 3};
+    }
+     else {
+      if(y <= centerY)  return {x: rect.right, y: rect.top, corner: 1};
+      else              return {x: rect.right, y: rect.bottom, corner: 2};
+    }
+  }
+
+  /**
+   * Скалярное произведение 2х векторов
+   * @param v1
+   * @param v2
+   * @returns {number}
+   * @private
+   */
+  __scalarMult(v1, v2) {return v1.x*v2.x + v1.y*v2.y}
+
+  /**
+   * v1 - v2
+   * @param v1
+   * @param v2
+   * @returns {{x: number, y: number}}
+   * @private
+   */
+  __vectorMinus(v1, v2) {return {x: v1.x-v2.x, y: v1.y-v2.y}}
+
+  /**
+   * Нахождение
+   * @param v1
+   * @param v2
+   * @returns {number}
+   * @private
+   */
+  __cosA(v1, v2) {
+    let dist1 = Math.sqrt(v1.x*v1.x + v1.y*v1.y),
+        dist2 = Math.sqrt(v2.x*v2.x + v2.y*v2.y);
+
+    if(dist1 === 0 || dist2 === 0)  return 0;
+
+    return this.__scalarMult(v1, v2) / dist1 / dist2;
+  }
+
+  /**
+   * Поиск косинуса в точке abc
+   * @param a
+   * @param b
+   * @param c
+   * @returns {number}
+   * @private
+   */
+  __get3pointsAngleCos(a, b, c) {
+    let a1 = this.__vectorMinus(a, b),
+        c1 = this.__vectorMinus(c, b);
+
+    return this.__cosA(a1, c1);
+  }
+
+  __checkCandidate(currentFocusedCenter, foundCandidate, newCandidate) {
+
+    let flag = false;
+    if(foundCandidate === null) {
+      flag = true;
+    }
+    else {
+      if(newCandidate.cos >= foundCandidate.cos) {
+        if(newCandidate.distance < foundCandidate.distance) {
+          flag = true;
+        } else {
+          let cosA = this.__get3pointsAngleCos(currentFocusedCenter, foundCandidate, newCandidate);
+          if(cosA < this.SEE_ANGLE_PRIORITY) flag = false;
+          else flag = true;
+        }
+      } else {
+        if(newCandidate.distance > foundCandidate.distance) {
+          flag = false;
+        } else {
+          let cosA = this.__get3pointsAngleCos(currentFocusedCenter, newCandidate, foundCandidate);
+          if(cosA < this.SEE_ANGLE_PRIORITY) flag = true;
+          else flag = false;
+        }
+      }
+    }
+
+    return flag;
+  }
+
   /**
    * В зависимости от направления - находит наилучший компонент для фокуса и фокусит его. Если компонент не найден -
    * вызывает опциональную функцию для переходов между слоями
@@ -140,9 +234,7 @@ export class StoreFocusBase {
     // берем все компоненты из текущего фокусного слоя
     let objects = this.focusLayers[this.currentFocusLayer];
 
-    let found = {
-      candidate: null
-    };
+    let found = null;
 
     let currentFocusedX = 0,
       currentFocusedY = 0;
@@ -152,81 +244,54 @@ export class StoreFocusBase {
       currentFocusedY = Math.floor(rect.top + (rect.bottom - rect.top) * 0.5);
     }
 
+    console.log();
+
     // проходим по всем кандидатам
     objects.map(obj => {
 
       if(!obj.component.focusable())    return;
 
+      // пропускаем, если этот кандидат - это текущий зафокушенный
+      if(this.currentFocused !== null && this.currentFocused.getDomRef() === obj.getDomRef()) return;
+
+
       // рассчитываем центр кандидата и расстояние от центра текущего фокуса до центра кандидата
       let rect = obj.getDomRef().getBoundingClientRect();
+
+
       obj.x = Math.floor(rect.left + (rect.right - rect.left) * 0.5);
       obj.y = Math.floor(rect.top + (rect.bottom - rect.top) * 0.5);
+      /*let t = this.__chooseNearestPoint(currentFocusedX, currentFocusedY, rect);
+      obj.x = t.x;
+      obj.y = t.y;
+      obj.corner = t.corner;*/
       let dx = obj.x - currentFocusedX, dy = obj.y - currentFocusedY;
       obj.distance = Math.sqrt(dx*dx + dy*dy);
 
-      let store = this;
-      function check() {
 
-        let flag = false;
-        if(found.candidate === null) {
-          flag = true;
-          //console.log('c1');
-        }
-        else {
-          if(Math.abs(obj.acos-found.candidate.acos) < store.FOCUS_MIN_ANGLE_FOR_DISTANCE) {
-            if (obj.distance < found.candidate.distance) {
-              flag = true;
-              //console.log('c2');
-            }
-          } else {
-            if( obj.cos > found.candidate.cos && obj.distance < 2*found.candidate.distance) {
-              flag = true;
-              //console.log('c3');
-            } else if( obj.cos < found.candidate.cos && obj.distance < 0.5*found.candidate.distance) {
-              flag = true;
-              //console.log('c4');
-            }
-          }
-        }
-
-        if(flag) {
-          /*console.log(c, found.candidate);
-          console.log('OK', c.obj.node);*/
-          found.candidate = obj;
-        }
-
+      let needCheckCandidate = false;
+      if(direction === MOVE_FOCUS_DIRECTION.UP            && obj.y < currentFocusedY) {
+          obj.cos = Math.abs((obj.y-currentFocusedY) / obj.distance);
+          needCheckCandidate = true;
+      } else if(direction === MOVE_FOCUS_DIRECTION.RIGHT  && obj.x > currentFocusedX) {
+          obj.cos = Math.abs((obj.x-currentFocusedX) / obj.distance);
+          needCheckCandidate = true;
+      } else if(direction === MOVE_FOCUS_DIRECTION.DOWN   && obj.y > currentFocusedY) {
+          obj.cos = Math.abs((obj.y-currentFocusedY) / obj.distance);
+          needCheckCandidate = true;
+      } else if(direction === MOVE_FOCUS_DIRECTION.LEFT   && obj.x < currentFocusedX) {
+          obj.cos = Math.abs((obj.x-currentFocusedX) / obj.distance);
+          needCheckCandidate = true;
       }
 
-      if(direction === MOVE_FOCUS_DIRECTION.UP) {
-        if(obj.y < currentFocusedY) {
-          obj.cos = Math.abs((obj.y-currentFocusedY) / obj.distance);
-          obj.acos = Math.acos(obj.cos);
-          check();
-        }
-      } else if(direction === MOVE_FOCUS_DIRECTION.RIGHT) {
-        if(obj.x > currentFocusedX) {
-          obj.cos = Math.abs((obj.x-currentFocusedX) / obj.distance);
-          obj.acos = Math.acos(obj.cos);
-          check();
-        }
-      } else if(direction === MOVE_FOCUS_DIRECTION.DOWN) {
-        if(obj.y > currentFocusedY) {
-          obj.cos = Math.abs((obj.y-currentFocusedY) / obj.distance);
-          obj.acos = Math.acos(obj.cos);
-          check();
-        }
-      } else if(direction === MOVE_FOCUS_DIRECTION.LEFT) {
-        if(obj.x < currentFocusedX) {
-          obj.cos = Math.abs((obj.x-currentFocusedX) / obj.distance);
-          obj.acos = Math.acos(obj.cos);
-          check();
-        }
+      if(needCheckCandidate && this.__checkCandidate({x: currentFocusedX, y: currentFocusedY }, found, obj)) {
+        found = obj;
       }
 
     });
 
-    if(found.candidate !== null) {
-      this.setCurrentFocused(found.candidate);
+    if(found !== null) {
+      this.setCurrentFocused(found);
     } else {
       // Если не найден подходящий для перехода фокуса узел -
       // здесь вызывается фнукия, которая может быть определена в классе-наслединке

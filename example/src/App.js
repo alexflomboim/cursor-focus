@@ -35,6 +35,10 @@ const App = () => {
     items.push(<TestComponent pos={{left: getRandomInt(1280), top: getRandomInt(720)}}/>);
   }
 
+  /*items.push(<TestComponent pos={{left: 500, top: 500}}/>);
+  items.push(<TestComponent pos={{left: 900, top: 500}}/>);
+  items.push(<TestComponent pos={{left: 700, top: 370}}/>);*/
+
   return <div>
     {items}
   </div>

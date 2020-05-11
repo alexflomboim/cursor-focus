@@ -17,7 +17,6 @@ const TestComponent = focusable(class TestComponent extends React.Component {
   }
 
   render() {
-    console.log('render MenuButton');
 
     return (
       <div style={this.props.pos} className={"btn " + (this.props.focused ? " focused" : "")} onClick={() => this.onClick()}></div>
