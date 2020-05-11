@@ -179,6 +179,19 @@ export class StoreFocusBase {
   }
 
   /**
+   * Расстояние между двумя точками
+   * @param v1
+   * @param v2
+   * @returns {number}
+   * @private
+   */
+  __distance(v1, v2) {
+    let dx = v1.x - v2.x,
+        dy = v1.y - v2.y;
+    return Math.sqrt(dx*dx + dy*dy);
+  }
+
+  /**
    * Поиск косинуса в точке abc
    * @param a
    * @param b
@@ -193,33 +206,56 @@ export class StoreFocusBase {
     return this.__cosA(a1, c1);
   }
 
-  __checkCandidate(currentFocusedCenter, foundCandidate, newCandidate) {
+  /**
+   * Возвращает центр дом элемента по рефу
+   * @param ref
+   * @returns {{x: number, y: number}}
+   * @private
+   */
+  __getDomNodeCenter(ref) {
+    let rect = ref.getBoundingClientRect();
+    return {
+      x: Math.floor(rect.left + (rect.right - rect.left) * 0.5),
+      y: Math.floor(rect.top + (rect.bottom - rect.top) * 0.5)
+    };
+  }
 
-    let flag = false;
-    if(foundCandidate === null) {
-      flag = true;
-    }
-    else {
-      if(newCandidate.cos >= foundCandidate.cos) {
-        if(newCandidate.distance < foundCandidate.distance) {
-          flag = true;
-        } else {
-          let cosA = this.__get3pointsAngleCos(currentFocusedCenter, foundCandidate, newCandidate);
-          if(cosA < this.SEE_ANGLE_PRIORITY) flag = false;
-          else flag = true;
-        }
-      } else {
-        if(newCandidate.distance > foundCandidate.distance) {
-          flag = false;
-        } else {
-          let cosA = this.__get3pointsAngleCos(currentFocusedCenter, newCandidate, foundCandidate);
-          if(cosA < this.SEE_ANGLE_PRIORITY) flag = true;
-          else flag = false;
-        }
+  /**
+   * Сравниваем кандидата и текущего лучшего кандидата,
+   * возвращаем true если новый кандидат лучше
+   *
+   * Выигрывает:
+   *  - тот, кто лучше и по углу (угол к направлению фокуса меньший, т.е. косинус больший) и по расстоянию
+   *  - если лучше только по одному из 2х критериев то:
+   *  - - строим треугольгик ABC где A - центр текущего фокуса, B - центр худшего по углу из двух сравниваемых, C - центр
+   *  лучшего по углу из двух.
+   *  - - рассчитываем угол ABC треугольника
+   *  - - если угол более SEE_ANGLE_PRIORITY (120) - выигрывает худший по углу
+   *  - - иначе (угол менее SEE_ANGLE_PRIORITY) - выигрывает лучший по углу
+   * @param currentFocusedCenter
+   * @param bestCandidate
+   * @param newCandidate
+   * @returns {boolean}
+   * @private
+   */
+  __checkCandidate(currentFocusedCenter, bestCandidate, newCandidate) {
+
+    // когда это нету текущего лучшего - новый кандидат становится лучшим
+    if(bestCandidate === null) return true;
+
+    if(newCandidate.cos >= bestCandidate.cos) {
+      if(newCandidate.distance < bestCandidate.distance) return true;
+      else {
+        if(this.__get3pointsAngleCos(currentFocusedCenter, bestCandidate, newCandidate) < this.SEE_ANGLE_PRIORITY) return false;
+        return true;
+      }
+    } else {
+      if(newCandidate.distance > bestCandidate.distance) return false;
+      else {
+        if(this.__get3pointsAngleCos(currentFocusedCenter, newCandidate, bestCandidate) < this.SEE_ANGLE_PRIORITY) return true;
+        return false;
       }
     }
-
-    return flag;
   }
 
   /**
@@ -234,64 +270,49 @@ export class StoreFocusBase {
     // берем все компоненты из текущего фокусного слоя
     let objects = this.focusLayers[this.currentFocusLayer];
 
-    let found = null;
+    let bestCandidate = null;
 
-    let currentFocusedX = 0,
-      currentFocusedY = 0;
-    if(this.currentFocused !== null && this.currentFocused !== null) {
-      let rect = this.currentFocused.getDomRef().getBoundingClientRect();
-      currentFocusedX = Math.floor(rect.left + (rect.right - rect.left) * 0.5);
-      currentFocusedY = Math.floor(rect.top + (rect.bottom - rect.top) * 0.5);
-    }
-
-    console.log();
+    let currentFocusedCenter = {x: 0, y: 0};
+    if(this.currentFocused !== null)  currentFocusedCenter = this.__getDomNodeCenter(this.currentFocused.getDomRef());
 
     // проходим по всем кандидатам
-    objects.map(obj => {
+    objects.map(newCandidate => {
 
-      if(!obj.component.focusable())    return;
+      if(!newCandidate.component.focusable())    return;
 
       // пропускаем, если этот кандидат - это текущий зафокушенный
-      if(this.currentFocused !== null && this.currentFocused.getDomRef() === obj.getDomRef()) return;
-
+      if(this.currentFocused !== null && this.currentFocused.getDomRef() === newCandidate.getDomRef()) return;
 
       // рассчитываем центр кандидата и расстояние от центра текущего фокуса до центра кандидата
-      let rect = obj.getDomRef().getBoundingClientRect();
+      Object.assign(newCandidate, this.__getDomNodeCenter(newCandidate.getDomRef()));
+      newCandidate.distance = this.__distance(newCandidate, currentFocusedCenter);
 
 
-      obj.x = Math.floor(rect.left + (rect.right - rect.left) * 0.5);
-      obj.y = Math.floor(rect.top + (rect.bottom - rect.top) * 0.5);
-      /*let t = this.__chooseNearestPoint(currentFocusedX, currentFocusedY, rect);
-      obj.x = t.x;
-      obj.y = t.y;
-      obj.corner = t.corner;*/
-      let dx = obj.x - currentFocusedX, dy = obj.y - currentFocusedY;
-      obj.distance = Math.sqrt(dx*dx + dy*dy);
-
-
+      // для кандидатов, которые находятся в нужной полуплоскости (остальных не рассматриваем) - вычисляем косинус угла
+      // между вектором направления перехода фокуса и вектором, соединящим центр текущего фокусного элемента и центр кандидата
       let needCheckCandidate = false;
-      if(direction === MOVE_FOCUS_DIRECTION.UP            && obj.y < currentFocusedY) {
-          obj.cos = Math.abs((obj.y-currentFocusedY) / obj.distance);
+      if(direction === MOVE_FOCUS_DIRECTION.UP            && newCandidate.y < currentFocusedCenter.y) {
+          newCandidate.cos = Math.abs((newCandidate.y-currentFocusedCenter.y) / newCandidate.distance);
           needCheckCandidate = true;
-      } else if(direction === MOVE_FOCUS_DIRECTION.RIGHT  && obj.x > currentFocusedX) {
-          obj.cos = Math.abs((obj.x-currentFocusedX) / obj.distance);
+      } else if(direction === MOVE_FOCUS_DIRECTION.RIGHT  && newCandidate.x > currentFocusedCenter.x) {
+          newCandidate.cos = Math.abs((newCandidate.x-currentFocusedCenter.x) / newCandidate.distance);
           needCheckCandidate = true;
-      } else if(direction === MOVE_FOCUS_DIRECTION.DOWN   && obj.y > currentFocusedY) {
-          obj.cos = Math.abs((obj.y-currentFocusedY) / obj.distance);
+      } else if(direction === MOVE_FOCUS_DIRECTION.DOWN   && newCandidate.y > currentFocusedCenter.y) {
+          newCandidate.cos = Math.abs((newCandidate.y-currentFocusedCenter.y) / newCandidate.distance);
           needCheckCandidate = true;
-      } else if(direction === MOVE_FOCUS_DIRECTION.LEFT   && obj.x < currentFocusedX) {
-          obj.cos = Math.abs((obj.x-currentFocusedX) / obj.distance);
+      } else if(direction === MOVE_FOCUS_DIRECTION.LEFT   && newCandidate.x < currentFocusedCenter.x) {
+          newCandidate.cos = Math.abs((newCandidate.x-currentFocusedCenter.x) / newCandidate.distance);
           needCheckCandidate = true;
       }
 
-      if(needCheckCandidate && this.__checkCandidate({x: currentFocusedX, y: currentFocusedY }, found, obj)) {
-        found = obj;
-      }
-
+      // если кандидат в нужной полуплоскости - сравниваем его с текущим лучшим и если он лучше - он становится лучшим
+      if(needCheckCandidate && this.__checkCandidate(currentFocusedCenter, bestCandidate, newCandidate))
+        bestCandidate = newCandidate;
     });
 
-    if(found !== null) {
-      this.setCurrentFocused(found);
+    // если лучший кандидат найден - фокусим его
+    if(bestCandidate !== null) {
+      this.setCurrentFocused(bestCandidate);
     } else {
       // Если не найден подходящий для перехода фокуса узел -
       // здесь вызывается фнукия, которая может быть определена в классе-наслединке
