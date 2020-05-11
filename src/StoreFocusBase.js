@@ -1,4 +1,10 @@
 
+export const MOVE_FOCUS_DIRECTION = {
+  UP: 0,
+  RIGHT: 1,
+  DOWN: 2,
+  LEFT: 3
+};
 
 export const FOCUS_LAYER_DEFAULT_FOCUS = {
   DEFAULT: 0,
@@ -191,25 +197,25 @@ export class StoreFocusBase {
 
       }
 
-      if(direction === 0) {
+      if(direction === MOVE_FOCUS_DIRECTION.UP) {
         if(obj.y < currentFocusedY) {
           obj.cos = Math.abs((obj.y-currentFocusedY) / obj.distance);
           obj.acos = Math.acos(obj.cos);
           check();
         }
-      } else if(direction === 1) {
+      } else if(direction === MOVE_FOCUS_DIRECTION.RIGHT) {
         if(obj.x > currentFocusedX) {
           obj.cos = Math.abs((obj.x-currentFocusedX) / obj.distance);
           obj.acos = Math.acos(obj.cos);
           check();
         }
-      } else if(direction === 2) {
+      } else if(direction === MOVE_FOCUS_DIRECTION.DOWN) {
         if(obj.y > currentFocusedY) {
           obj.cos = Math.abs((obj.y-currentFocusedY) / obj.distance);
           obj.acos = Math.acos(obj.cos);
           check();
         }
-      } else if(direction === 3) {
+      } else if(direction === MOVE_FOCUS_DIRECTION.LEFT) {
         if(obj.x < currentFocusedX) {
           obj.cos = Math.abs((obj.x-currentFocusedX) / obj.distance);
           obj.acos = Math.acos(obj.cos);

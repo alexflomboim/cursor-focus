@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from 'react-dom';
 
-function focusable (WrappedComponent, Store, focusLayers = null) {
+function focusable (WrappedComponent, store, focusLayers = null) {
   class Focusable extends React.Component {
     constructor(props) {
       super(props);
@@ -14,7 +14,7 @@ function focusable (WrappedComponent, Store, focusLayers = null) {
       this.focusLayers = [];
 
       //если фокусные слои не переданы - добавляем объект в ВСЕ фокусные слои
-      if(focusLayers === null)    Object.keys(Store.focusLayers).map(fl => this.focusLayers.push(fl));
+      if(focusLayers === null)    Object.keys(store.focusLayers).map(fl => this.focusLayers.push(fl));
       else                        focusLayers.map(fl => this.focusLayers.push(fl));
 
       this.state = {
@@ -29,7 +29,7 @@ function focusable (WrappedComponent, Store, focusLayers = null) {
       let ok = false;
       // определяем, входит ли данный компонент в активный в данный момент фокусный слой
       for(let i=0;i<this.focusLayers.length;i++) {
-        if(Store.currentFocusLayer === this.focusLayers[i]) {
+        if(store.currentFocusLayer === this.focusLayers[i]) {
           ok = true;
           break;
         }
@@ -42,9 +42,9 @@ function focusable (WrappedComponent, Store, focusLayers = null) {
       if(!this.componentRef.current.focusable())  return;
 
       // проверяем, включен ли сейчас фообще фокус
-      if(!Store.focusEnabled) return;
+      if(!store.focusEnabled) return;
 
-      Store.setCurrentFocusedByComponent(this.componentRef.current);
+      store.setCurrentFocusedByComponent(this.componentRef.current);
     }
 
     componentDidMount() {
@@ -68,14 +68,14 @@ function focusable (WrappedComponent, Store, focusLayers = null) {
       }
 
       //добавляем компонент в соответствующие фокусные слои
-      for(let i=0;i<this.focusLayers.length;i++)   Store.addToFocusLayer(this.focusLayers[i], obj);
+      for(let i=0;i<this.focusLayers.length;i++)   store.addToFocusLayer(this.focusLayers[i], obj);
 
     }
 
     componentWillUnmount() {
       //удалем компонент из всех слоев
       for(let i=0;i<this.focusLayers.length;i++)
-        Store.removeFromFocusLayer(this.focusLayers[i], this.componentRef.current);
+        store.removeFromFocusLayer(this.focusLayers[i], this.componentRef.current);
 
       // отвязываем обработчик мыши
       this.domRef.removeEventListener('mouseover', this.onMouseEnter);
