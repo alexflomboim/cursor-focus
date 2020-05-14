@@ -37,7 +37,7 @@ const App = () => {
 
   /*items.push(<TestComponent pos={{left: 500, top: 500}}/>);
   items.push(<TestComponent pos={{left: 900, top: 500}}/>);
-  items.push(<TestComponent pos={{left: 700, top: 370}}/>);*/
+  items.push(<TestComponent pos={{left: 700, top: 400}}/>);*/
 
   return <div>
     {items}
