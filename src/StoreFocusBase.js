@@ -130,7 +130,7 @@ export class StoreFocusBase {
 
   __chooseNearestPoint(x, y, rect) {
     let centerX = Math.floor(rect.left + (rect.right - rect.left) * 0.5),
-        centerY = Math.floor(rect.top + (rect.bottom - rect.top) * 0.5);
+      centerY = Math.floor(rect.top + (rect.bottom - rect.top) * 0.5);
 
     let nearestCornerX = 0, nearestCornerY = 0;
 
@@ -138,7 +138,7 @@ export class StoreFocusBase {
       if(y <= centerY)  return {x: rect.left, y: rect.top, corner: 0};
       else              return {x: rect.left, y: rect.bottom, corner: 3};
     }
-     else {
+    else {
       if(y <= centerY)  return {x: rect.right, y: rect.top, corner: 1};
       else              return {x: rect.right, y: rect.bottom, corner: 2};
     }
@@ -171,7 +171,7 @@ export class StoreFocusBase {
    */
   __cosA(v1, v2) {
     let dist1 = Math.sqrt(v1.x*v1.x + v1.y*v1.y),
-        dist2 = Math.sqrt(v2.x*v2.x + v2.y*v2.y);
+      dist2 = Math.sqrt(v2.x*v2.x + v2.y*v2.y);
 
     if(dist1 === 0 || dist2 === 0)  return 0;
 
@@ -187,7 +187,7 @@ export class StoreFocusBase {
    */
   __distance(v1, v2) {
     let dx = v1.x - v2.x,
-        dy = v1.y - v2.y;
+      dy = v1.y - v2.y;
     return Math.sqrt(dx*dx + dy*dy);
   }
 
@@ -201,7 +201,7 @@ export class StoreFocusBase {
    */
   __get3pointsAngleCos(a, b, c) {
     let a1 = this.__vectorMinus(a, b),
-        c1 = this.__vectorMinus(c, b);
+      c1 = this.__vectorMinus(c, b);
 
     return this.__cosA(a1, c1);
   }
@@ -262,10 +262,11 @@ export class StoreFocusBase {
    * В зависимости от направления - находит наилучший компонент для фокуса и фокусит его. Если компонент не найден -
    * вызывает опциональную функцию для переходов между слоями
    * @param direction
+   * @returns {boolean} true - если новый элемент найден и назанчен, false - если не найден
    */
   moveFocus(direction) {
 
-    if(!this.focusEnabled) return;
+    if(!this.focusEnabled) return false;
 
     // берем все компоненты из текущего фокусного слоя
     let objects = this.focusLayers[this.currentFocusLayer];
@@ -292,17 +293,17 @@ export class StoreFocusBase {
       // между вектором направления перехода фокуса и вектором, соединящим центр текущего фокусного элемента и центр кандидата
       let needCheckCandidate = false;
       if(direction === MOVE_FOCUS_DIRECTION.UP            && newCandidate.y < currentFocusedCenter.y) {
-          newCandidate.cos = Math.abs((newCandidate.y-currentFocusedCenter.y) / newCandidate.distance);
-          needCheckCandidate = true;
+        newCandidate.cos = Math.abs((newCandidate.y-currentFocusedCenter.y) / newCandidate.distance);
+        needCheckCandidate = true;
       } else if(direction === MOVE_FOCUS_DIRECTION.RIGHT  && newCandidate.x > currentFocusedCenter.x) {
-          newCandidate.cos = Math.abs((newCandidate.x-currentFocusedCenter.x) / newCandidate.distance);
-          needCheckCandidate = true;
+        newCandidate.cos = Math.abs((newCandidate.x-currentFocusedCenter.x) / newCandidate.distance);
+        needCheckCandidate = true;
       } else if(direction === MOVE_FOCUS_DIRECTION.DOWN   && newCandidate.y > currentFocusedCenter.y) {
-          newCandidate.cos = Math.abs((newCandidate.y-currentFocusedCenter.y) / newCandidate.distance);
-          needCheckCandidate = true;
+        newCandidate.cos = Math.abs((newCandidate.y-currentFocusedCenter.y) / newCandidate.distance);
+        needCheckCandidate = true;
       } else if(direction === MOVE_FOCUS_DIRECTION.LEFT   && newCandidate.x < currentFocusedCenter.x) {
-          newCandidate.cos = Math.abs((newCandidate.x-currentFocusedCenter.x) / newCandidate.distance);
-          needCheckCandidate = true;
+        newCandidate.cos = Math.abs((newCandidate.x-currentFocusedCenter.x) / newCandidate.distance);
+        needCheckCandidate = true;
       }
 
       // если кандидат в нужной полуплоскости - сравниваем его с текущим лучшим и если он лучше - он становится лучшим
@@ -313,13 +314,10 @@ export class StoreFocusBase {
     // если лучший кандидат найден - фокусим его
     if(bestCandidate !== null) {
       this.setCurrentFocused(bestCandidate);
-    } else {
-      // Если не найден подходящий для перехода фокуса узел -
-      // здесь вызывается фнукия, которая может быть определена в классе-наслединке
-      // В ней можно определить поведение в таких ситуациях
-      if(typeof this.emptyFocusDirectionAction === "function")
-        this.emptyFocusDirectionAction(direction);
+      return true;
     }
+
+    return false;
   }
 
   /**
@@ -329,7 +327,6 @@ export class StoreFocusBase {
    * @param defaultFocus
    */
   setFocusLayer(newValue = null, defaultFocus = FOCUS_LAYER_DEFAULT_FOCUS.DEFAULT) {
-    console.log('setFocusLayer ', newValue);
 
     this.currentFocusLayer = newValue;
 
@@ -339,7 +336,6 @@ export class StoreFocusBase {
       this.setCurrentFocused(null);
     }
   }
-
 
 }
 
