@@ -4,6 +4,7 @@ import { ExampleComponent } from 'cursor-focus'
 import './index.css'
 import TestComponent from './TestComponent'
 import StoreFocus from './StoreFocus'
+import { MOVE_FOCUS_DIRECTION } from 'cursor-focus'
 
 function eventFire(el, etype){
   if (el.fireEvent) {
@@ -21,10 +22,10 @@ function getRandomInt(max) {
 
 const App = () => {
   document.addEventListener('keydown', function(e){
-    if(e.code === 'ArrowUp')        StoreFocus.moveFocus(0);
-    if(e.code === 'ArrowRight')     StoreFocus.moveFocus(1);
-    if(e.code === 'ArrowDown')      StoreFocus.moveFocus(2);
-    if(e.code === 'ArrowLeft')      StoreFocus.moveFocus(3);
+    if(e.code === 'ArrowUp')        StoreFocus.moveFocus(MOVE_FOCUS_DIRECTION.UP);
+    if(e.code === 'ArrowRight')     StoreFocus.moveFocus(MOVE_FOCUS_DIRECTION.RIGHT);
+    if(e.code === 'ArrowDown')      StoreFocus.moveFocus(MOVE_FOCUS_DIRECTION.DOWN);
+    if(e.code === 'ArrowLeft')      StoreFocus.moveFocus(MOVE_FOCUS_DIRECTION.LEFT);
     if(e.code === 'Enter' && StoreFocus.currentFocused !== null) {
       eventFire(StoreFocus.currentFocused.getDomRef(), 'click');
     }
