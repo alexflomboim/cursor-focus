@@ -26,9 +26,7 @@ const App = () => {
     if(e.code === 'ArrowRight')     StoreFocus.moveFocus(MOVE_FOCUS_DIRECTION.RIGHT);
     if(e.code === 'ArrowDown')      StoreFocus.moveFocus(MOVE_FOCUS_DIRECTION.DOWN);
     if(e.code === 'ArrowLeft')      StoreFocus.moveFocus(MOVE_FOCUS_DIRECTION.LEFT);
-    if(e.code === 'Enter' && StoreFocus.currentFocused !== null) {
-      eventFire(StoreFocus.currentFocused.getDomRef(), 'click');
-    }
+    if(e.code === 'Enter')          StoreFocus.click();
   });
 
   let items = [], n=15;
