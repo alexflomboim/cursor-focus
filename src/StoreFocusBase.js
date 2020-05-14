@@ -1,5 +1,4 @@
-import {eventFire} from "../common/utils";
-import StoreFocus from "./StoreFocus";
+
 
 export const MOVE_FOCUS_DIRECTION = {
   UP: 0,
@@ -50,9 +49,9 @@ export class StoreFocusBase {
    * Функция используется для вызова клика на зафокушенном объекте
    */
   click() {
-    if(StoreFocus.currentFocused === null)  return ;
+    if(this.currentFocused === null)  return ;
 
-    let el = StoreFocus.currentFocused.getDomRef();
+    let el = this.currentFocused.getDomRef();
     if (el.fireEvent) {
       el.fireEvent('onclick');
     } else {
