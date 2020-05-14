@@ -1,3 +1,5 @@
+import {eventFire} from "../common/utils";
+import StoreFocus from "./StoreFocus";
 
 export const MOVE_FOCUS_DIRECTION = {
   UP: 0,
@@ -38,26 +40,106 @@ export class StoreFocusBase {
 
   }
 
-  /**
-   * находим среди кандидатов слоя - такой, который определен как фокусируемым по-умолчанию.
-   * Либо возвращаем null
-   * @returns {null}
-   * @private
-   */
-  _findDefaultFocused() {
-    let defaultFocused = null;
 
-    this.focusLayers[this.currentFocusLayer].map(e => {
-      if(e.component.focusable() && e.component.defaultFocused())
-        defaultFocused = e;
-    })
-
-    return defaultFocused;
-  }
 
   //Используются для глобального включение-отключения фокуса, например во время обработки запроса
   disableFocus() {this.focusEnabled = false;}
   enableFocus() {this.focusEnabled = true;}
+
+  /**
+   * Функция используется для вызова клика на зафокушенном объекте
+   */
+  click() {
+    if(StoreFocus.currentFocused === null)  return ;
+
+    let el = StoreFocus.currentFocused.getDomRef();
+    if (el.fireEvent) {
+      el.fireEvent('onclick');
+    } else {
+      let evObj = document.createEvent('Events');
+      evObj.initEvent('click', true, false);
+      el.dispatchEvent(evObj);
+    }
+  }
+
+  /**
+   * В зависимости от направления - находит наилучший компонент для фокуса и фокусит его. Если компонент не найден -
+   * вызывает опциональную функцию для переходов между слоями
+   * @param direction
+   * @returns {boolean} true - если новый элемент найден и назанчен, false - если не найден
+   */
+  moveFocus(direction) {
+
+    if(!this.focusEnabled) return false;
+
+    // берем все компоненты из текущего фокусного слоя
+    let objects = this.focusLayers[this.currentFocusLayer];
+
+    let bestCandidate = null;
+
+    let currentFocusedCenter = {x: 0, y: 0};
+    if(this.currentFocused !== null)  currentFocusedCenter = this.__getDomNodeCenter(this.currentFocused.getDomRef());
+
+    // проходим по всем кандидатам
+    objects.map(newCandidate => {
+
+      if(!newCandidate.component.focusable())    return;
+
+      // пропускаем, если этот кандидат - это текущий зафокушенный
+      if(this.currentFocused !== null && this.currentFocused.getDomRef() === newCandidate.getDomRef()) return;
+
+      // рассчитываем центр кандидата и расстояние от центра текущего фокуса до центра кандидата
+      Object.assign(newCandidate, this.__getDomNodeCenter(newCandidate.getDomRef()));
+      newCandidate.distance = this.__distance(newCandidate, currentFocusedCenter);
+
+
+      // для кандидатов, которые находятся в нужной полуплоскости (остальных не рассматриваем) - вычисляем косинус угла
+      // между вектором направления перехода фокуса и вектором, соединящим центр текущего фокусного элемента и центр кандидата
+      let needCheckCandidate = false;
+      if(direction === MOVE_FOCUS_DIRECTION.UP            && newCandidate.y < currentFocusedCenter.y) {
+        newCandidate.cos = Math.abs((newCandidate.y-currentFocusedCenter.y) / newCandidate.distance);
+        needCheckCandidate = true;
+      } else if(direction === MOVE_FOCUS_DIRECTION.RIGHT  && newCandidate.x > currentFocusedCenter.x) {
+        newCandidate.cos = Math.abs((newCandidate.x-currentFocusedCenter.x) / newCandidate.distance);
+        needCheckCandidate = true;
+      } else if(direction === MOVE_FOCUS_DIRECTION.DOWN   && newCandidate.y > currentFocusedCenter.y) {
+        newCandidate.cos = Math.abs((newCandidate.y-currentFocusedCenter.y) / newCandidate.distance);
+        needCheckCandidate = true;
+      } else if(direction === MOVE_FOCUS_DIRECTION.LEFT   && newCandidate.x < currentFocusedCenter.x) {
+        newCandidate.cos = Math.abs((newCandidate.x-currentFocusedCenter.x) / newCandidate.distance);
+        needCheckCandidate = true;
+      }
+
+      // если кандидат в нужной полуплоскости - сравниваем его с текущим лучшим и если он лучше - он становится лучшим
+      if(needCheckCandidate && this.__checkCandidate(currentFocusedCenter, bestCandidate, newCandidate))
+        bestCandidate = newCandidate;
+    });
+
+    // если лучший кандидат найден - фокусим его
+    if(bestCandidate !== null) {
+      this._setCurrentFocused(bestCandidate);
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Устанавливает новый активный слой. Второй параметр определяет, какой фокусный элемент этого слоя будет зафокушен по-умолчанию:
+   * дефолтовый или последний зафокушенный
+   * @param newValue
+   * @param defaultFocus
+   */
+  setFocusLayer(newValue = null, defaultFocus = FOCUS_LAYER_DEFAULT_FOCUS.DEFAULT) {
+
+    this.currentFocusLayer = newValue;
+
+    if (defaultFocus === FOCUS_LAYER_DEFAULT_FOCUS.SAVED) {
+      this._setCurrentFocused(this._getLayerFocused(this.currentFocusLayer));
+    } else if (defaultFocus === FOCUS_LAYER_DEFAULT_FOCUS.DEFAULT) {
+      this._setCurrentFocused(null);
+    }
+  }
 
   /**
    * Используется из обработчика мыши в focusable-компоненте. Предназначена для установки фокуса на конкретный компонент
@@ -67,13 +149,13 @@ export class StoreFocusBase {
     let focusLayer = this.focusLayers[this.currentFocusLayer];
     for(let i=0;i<focusLayer.length;i++) {
       if(focusLayer[i].component === component) {
-        this.setCurrentFocused(focusLayer[i]);
+        this._setCurrentFocused(focusLayer[i]);
         return;
       }
     }
   }
 
-  setCurrentFocused(obj) {
+  _setCurrentFocused(obj) {
     //снимаем фокус с предыдущего
     if(this.currentFocused !== null)    this.currentFocused.setUnFocused();
 
@@ -89,16 +171,7 @@ export class StoreFocusBase {
     if(this.currentFocused !== null)    this.currentFocused.setFocused();
   }
 
-  /**
-   * Возвращает последний фокушенный элемент в указанном слое.
-   * @param layer
-   * @returns {null}
-   */
-  getLayerFocused(layer) {
-    let t = this.lastLayersFocuses[layer];
-    if(typeof t === "undefined") return null;
-    return t;
-  }
+
 
   /**
    * Добавляет компонент в указанный слой. Используется в componentDidMount focusable HOC
@@ -117,7 +190,7 @@ export class StoreFocusBase {
   removeFromFocusLayer(focusLayer, component) {
     //Если удаляется текущий зафокушенный - сбрасываем фокус
     if(this.currentFocused !== null && this.currentFocused.component === component) {
-      this.setCurrentFocused(null);
+      this._setCurrentFocused(null);
     }
 
     //Удаляем этот компонент из всех слоев
@@ -126,6 +199,34 @@ export class StoreFocusBase {
         this.focusLayers[focusLayer].splice(i, 1);
       }
     }
+  }
+
+  /**
+   * Возвращает последний фокушенный элемент в указанном слое.
+   * @param layer
+   * @returns {null}
+   */
+  _getLayerFocused(layer) {
+    let t = this.lastLayersFocuses[layer];
+    if(typeof t === "undefined") return null;
+    return t;
+  }
+
+  /**
+   * находим среди кандидатов слоя - такой, который определен как фокусируемым по-умолчанию.
+   * Либо возвращаем null
+   * @returns {null}
+   * @private
+   */
+  _findDefaultFocused() {
+    let defaultFocused = null;
+
+    this.focusLayers[this.currentFocusLayer].map(e => {
+      if(e.component.focusable() && e.component.defaultFocused())
+        defaultFocused = e;
+    })
+
+    return defaultFocused;
   }
 
   __chooseNearestPoint(x, y, rect) {
@@ -258,84 +359,7 @@ export class StoreFocusBase {
     }
   }
 
-  /**
-   * В зависимости от направления - находит наилучший компонент для фокуса и фокусит его. Если компонент не найден -
-   * вызывает опциональную функцию для переходов между слоями
-   * @param direction
-   * @returns {boolean} true - если новый элемент найден и назанчен, false - если не найден
-   */
-  moveFocus(direction) {
 
-    if(!this.focusEnabled) return false;
-
-    // берем все компоненты из текущего фокусного слоя
-    let objects = this.focusLayers[this.currentFocusLayer];
-
-    let bestCandidate = null;
-
-    let currentFocusedCenter = {x: 0, y: 0};
-    if(this.currentFocused !== null)  currentFocusedCenter = this.__getDomNodeCenter(this.currentFocused.getDomRef());
-
-    // проходим по всем кандидатам
-    objects.map(newCandidate => {
-
-      if(!newCandidate.component.focusable())    return;
-
-      // пропускаем, если этот кандидат - это текущий зафокушенный
-      if(this.currentFocused !== null && this.currentFocused.getDomRef() === newCandidate.getDomRef()) return;
-
-      // рассчитываем центр кандидата и расстояние от центра текущего фокуса до центра кандидата
-      Object.assign(newCandidate, this.__getDomNodeCenter(newCandidate.getDomRef()));
-      newCandidate.distance = this.__distance(newCandidate, currentFocusedCenter);
-
-
-      // для кандидатов, которые находятся в нужной полуплоскости (остальных не рассматриваем) - вычисляем косинус угла
-      // между вектором направления перехода фокуса и вектором, соединящим центр текущего фокусного элемента и центр кандидата
-      let needCheckCandidate = false;
-      if(direction === MOVE_FOCUS_DIRECTION.UP            && newCandidate.y < currentFocusedCenter.y) {
-        newCandidate.cos = Math.abs((newCandidate.y-currentFocusedCenter.y) / newCandidate.distance);
-        needCheckCandidate = true;
-      } else if(direction === MOVE_FOCUS_DIRECTION.RIGHT  && newCandidate.x > currentFocusedCenter.x) {
-        newCandidate.cos = Math.abs((newCandidate.x-currentFocusedCenter.x) / newCandidate.distance);
-        needCheckCandidate = true;
-      } else if(direction === MOVE_FOCUS_DIRECTION.DOWN   && newCandidate.y > currentFocusedCenter.y) {
-        newCandidate.cos = Math.abs((newCandidate.y-currentFocusedCenter.y) / newCandidate.distance);
-        needCheckCandidate = true;
-      } else if(direction === MOVE_FOCUS_DIRECTION.LEFT   && newCandidate.x < currentFocusedCenter.x) {
-        newCandidate.cos = Math.abs((newCandidate.x-currentFocusedCenter.x) / newCandidate.distance);
-        needCheckCandidate = true;
-      }
-
-      // если кандидат в нужной полуплоскости - сравниваем его с текущим лучшим и если он лучше - он становится лучшим
-      if(needCheckCandidate && this.__checkCandidate(currentFocusedCenter, bestCandidate, newCandidate))
-        bestCandidate = newCandidate;
-    });
-
-    // если лучший кандидат найден - фокусим его
-    if(bestCandidate !== null) {
-      this.setCurrentFocused(bestCandidate);
-      return true;
-    }
-
-    return false;
-  }
-
-  /**
-   * Устанавливает новый активный слой. Второй параметр определяет, какой фокусный элемент этого слоя будет зафокушен по-умолчанию:
-   * дефолтовый или последний зафокушенный
-   * @param newValue
-   * @param defaultFocus
-   */
-  setFocusLayer(newValue = null, defaultFocus = FOCUS_LAYER_DEFAULT_FOCUS.DEFAULT) {
-
-    this.currentFocusLayer = newValue;
-
-    if (defaultFocus === FOCUS_LAYER_DEFAULT_FOCUS.SAVED) {
-      this.setCurrentFocused(this.getLayerFocused(this.currentFocusLayer));
-    } else if (defaultFocus === FOCUS_LAYER_DEFAULT_FOCUS.DEFAULT) {
-      this.setCurrentFocused(null);
-    }
-  }
 
 }
 

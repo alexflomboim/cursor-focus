@@ -14,44 +14,48 @@ npm install --save cursor-focus
 
 Для работы неободимо:
 
-### 1. Создать в проекте класс-наследник от **StoreFocusBase**
+### 1. Создать экземляр StoreFocusBase
+
+Для случая с одним фокусным слоем:
 ```jsx
-class StoreFocus extends StoreFocusBase{
-
-    constructor() {
-        super();
-    }
-...
-
-}
+let StoreFocus = new StoreFocusBase();
 ```
-Базовый класс-стор содержит логику принятия решения о передаче фокуса, информацию о фокусных слоях и всю сопутствующую механику.
 
-В наследнике можно переопределять некоторую механику поведения, о которой идет речь ниже.
-
-### 2. Все фокусабльные элементы выделить в отдельные классовые компоненты, и обернуть их в HOC focusable:
+Для случая с несколькими фокусными слоями:
 ```jsx
-const Field = focusable(class Field extends React.Component {
+let StoreFocus = new StoreFocusBase([MY_FOCUS_LAYER_1, MY_FOCUS_LAYER_2]);
+```
+
+Этот класс-стор содержит логику принятия решения о передаче фокуса, информацию о фокусных слоях и всю сопутствующую механику.
+
+### 2. Все фокусабльные элементы обернуть в HOC focusable:
+
+Фокусабельные элементы должны быть выделены в классовые компоненты. Для работы фокуса, в focusable нужно передать таже ваш StoreFocus (обязательный параметр) и массив слоев, в которые данный элемент входит (опциональный параметр).
+
+```jsx
+const MyButton = focusable(class MyButton extends React.Component {
     constructor(props) {
         super(props);
     }
-}, StoreFocus)
+}, StoreFocus, [MY_FOCUS_LAYER_1])
 
 ```
 Этот HOC имплементирует в компонент логику его фокусабельности. Признак присутствия фокуса передается в компоенент через **props.focused** (true/false)
 
-Вторым обязательным параметром в HOC нужно передать ваш класс-наследник от StoreFocusBase
+### 3. В приложении реализовать реакцию на нажатия кнопок курсора
 
-Третий - опциональный параметр - позволяет использовать слои, о которых написано ниже.
+Для манипуляции фокусом - необходимо вызывать функцию moveFocus вашего StoreFocus, передавая в него параметром - направление перехода.
 
-### 3. Реализовать реакцию на курсор
-Для управления фокусом кнопками курсора - необходимо вызывать функцию moveFocus вашего класса-наследника от StoreFocusBase передавая в него параметром - направление перехода: 0 - вверх, 1 - вправо, 2 - вниз, 3 - влево
+Для обработки кликов на фокусабельных элементах - необходимо эмулировать обычный браузерный
 ```jsx
 document.addEventListener('keydown', function(e){
-    if(e.code === 'ArrowUp')        StoreFocus.moveFocus(0);
-    if(e.code === 'ArrowRight')     StoreFocus.moveFocus(1);
-    if(e.code === 'ArrowDown')      StoreFocus.moveFocus(2);
-    if(e.code === 'ArrowLeft')      StoreFocus.moveFocus(3);
+    if(e.code === 'ArrowUp')        StoreFocus.moveFocus(MOVE_FOCUS_DIRECTION.UP);
+    if(e.code === 'ArrowRight')     StoreFocus.moveFocus(MOVE_FOCUS_DIRECTION.RIGHT);
+    if(e.code === 'ArrowDown')      StoreFocus.moveFocus(MOVE_FOCUS_DIRECTION.DOWN);
+    if(e.code === 'ArrowLeft')      StoreFocus.moveFocus(MOVE_FOCUS_DIRECTION.LEFT);
+    if(e.code === 'Enter' && StoreFocus.currentFocused !== null) {
+      eventFire(StoreFocus.currentFocused.getDomRef(), 'click');
+    }
 
   });
 ```
