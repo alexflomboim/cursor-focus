@@ -23,6 +23,7 @@ export class StoreFocusBase {
 
     this.focusLayers = {}; // объект массивов - здесь содержаться фокусабельные объекты, входщие в каждый слов
     this.currentFocusLayer = null; // активный фокусный слов
+    this.previousFocusLayer = null; // предыдущий фокусный слов
     this.currentFocused = null; // активный зафокушенный объект
     this.focusEnabled = true; // флаг активности фокуса вообще, если false - движения мыши или курсора не будут фокусить объекты
     this.lastLayersFocuses = {}; // для каждого слоя здесь храним последний зафокушенный объект, для фокусировки его при возврате к слою
@@ -34,7 +35,7 @@ export class StoreFocusBase {
       this.focusLayers[defaultLayerKey] = [];
       this.setFocusLayer(defaultLayerKey);
     } else
-      fLayers.map(fl => this.focusLayers[fl] = []);
+      fLayers.forEach(fl => this.focusLayers[fl] = []);
 
 
   }
@@ -80,7 +81,7 @@ export class StoreFocusBase {
     if(this.currentFocused !== null)  currentFocusedCenter = this.__getDomNodeCenter(this.currentFocused.getDomRef());
 
     // проходим по всем кандидатам
-    objects.map(newCandidate => {
+    objects.forEach(newCandidate => {
 
       if(!newCandidate.component.focusable())    return;
 
@@ -126,10 +127,20 @@ export class StoreFocusBase {
   /**
    * Устанавливает новый активный слой. Второй параметр определяет, какой фокусный элемент этого слоя будет зафокушен по-умолчанию:
    * дефолтовый или последний зафокушенный
-   * @param newValue
+   * @param newValue - если передан NULL - будет автоматический перход на предыдущий фокусный слой
    * @param defaultFocus
    */
   setFocusLayer(newValue = null, defaultFocus = FOCUS_LAYER_DEFAULT_FOCUS.DEFAULT) {
+    //если передан пустой слой - значит нужен переход на последний активный слой
+    if(newValue === null && this.previousFocusLayer !== null) {
+      let gotoLayer = this.previousFocusLayer;
+      this.previousFocusLayer = null;
+      this.setFocusLayer(gotoLayer);
+      return;
+    }
+
+    //сохраняем предыдущий фокусный слой
+    this.previousFocusLayer = this.currentFocusLayer;
 
     this.currentFocusLayer = newValue;
 
@@ -155,6 +166,9 @@ export class StoreFocusBase {
   }
 
   _setCurrentFocused(obj) {
+    // если это попытка установить повторно фокус на элемет, который и так под фокусом - выход
+    if(this.currentFocused === obj) return;
+
     //снимаем фокус с предыдущего
     if(this.currentFocused !== null)    this.currentFocused.setUnFocused();
 
@@ -220,7 +234,7 @@ export class StoreFocusBase {
   _findDefaultFocused() {
     let defaultFocused = null;
 
-    this.focusLayers[this.currentFocusLayer].map(e => {
+    this.focusLayers[this.currentFocusLayer].forEach(e => {
       if(e.component.focusable() && e.component.defaultFocused())
         defaultFocused = e;
     })
@@ -228,21 +242,21 @@ export class StoreFocusBase {
     return defaultFocused;
   }
 
-  __chooseNearestPoint(x, y, rect) {
-    let centerX = Math.floor(rect.left + (rect.right - rect.left) * 0.5),
-      centerY = Math.floor(rect.top + (rect.bottom - rect.top) * 0.5);
+  /*__chooseNearestPoint(x, y, rect) {
+      let centerX = Math.floor(rect.left + (rect.right - rect.left) * 0.5),
+          centerY = Math.floor(rect.top + (rect.bottom - rect.top) * 0.5);
 
-    let nearestCornerX = 0, nearestCornerY = 0;
+      let nearestCornerX = 0, nearestCornerY = 0;
 
-    if(x <= centerX) {
-      if(y <= centerY)  return {x: rect.left, y: rect.top, corner: 0};
-      else              return {x: rect.left, y: rect.bottom, corner: 3};
-    }
-    else {
-      if(y <= centerY)  return {x: rect.right, y: rect.top, corner: 1};
-      else              return {x: rect.right, y: rect.bottom, corner: 2};
-    }
-  }
+      if(x <= centerX) {
+          if(y <= centerY)  return {x: rect.left, y: rect.top, corner: 0};
+          else              return {x: rect.left, y: rect.bottom, corner: 3};
+      }
+      else {
+          if(y <= centerY)  return {x: rect.right, y: rect.top, corner: 1};
+          else              return {x: rect.right, y: rect.bottom, corner: 2};
+      }
+  }*/
 
   /**
    * Скалярное произведение 2х векторов

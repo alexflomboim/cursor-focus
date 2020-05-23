@@ -54,7 +54,7 @@ function focusable (WrappedComponent, store, focusLayers = null) {
 
       // вытягиваем реф на дом-узел компонента и учим его слушать мышь
       this.domRef = ReactDOM.findDOMNode(component);
-      this.domRef.addEventListener('mouseover', this.onMouseEnter)
+      this.domRef.addEventListener('mouseenter', this.onMouseEnter)
 
       //эти методы могут быть переопределены в компонентах
       if(typeof component.focusable !== "function")       component.focusable = function() {return true}
@@ -78,7 +78,7 @@ function focusable (WrappedComponent, store, focusLayers = null) {
         store.removeFromFocusLayer(this.focusLayers[i], this.componentRef.current);
 
       // отвязываем обработчик мыши
-      this.domRef.removeEventListener('mouseover', this.onMouseEnter);
+      this.domRef.removeEventListener('mouseenter', this.onMouseEnter);
     }
 
     render() {
