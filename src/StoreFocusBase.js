@@ -135,7 +135,7 @@ export class StoreFocusBase {
     if(newValue === null && this.previousFocusLayer !== null) {
       let gotoLayer = this.previousFocusLayer;
       this.previousFocusLayer = null;
-      this.setFocusLayer(gotoLayer);
+      this.setFocusLayer(gotoLayer, defaultFocus);
       return;
     }
 

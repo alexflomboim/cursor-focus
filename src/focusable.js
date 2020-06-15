@@ -66,8 +66,14 @@ function focusable (WrappedComponent/*, store, focusLayers = null*/) {
           this.setState({focused: true});
           if(typeof this.domRef.focus === 'function') {
             this.domRef.focus();
-          }},
-        setUnFocused: () => {this.setState({focused: false})},
+          }
+        },
+        setUnFocused: () => {
+          this.setState({focused: false});
+          if(typeof this.domRef.blur === 'function') {
+            this.domRef.blur();
+          }
+        },
         getDomRef: () => {return this.domRef}
       }
 
