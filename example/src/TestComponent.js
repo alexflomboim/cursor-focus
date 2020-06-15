@@ -13,13 +13,18 @@ const TestComponent = focusable(class TestComponent extends React.Component {
   }
 
   defaultFocused() {
-    return true;
+    return !!this.props.defaultFocused;
   }
 
   render() {
 
+    let className = 'btn';
+
+    if(this.props.focused)  className += ' focused';
+    if(this.props.defaultFocused)  className += ' default-focused';
+
     return (
-      <div style={this.props.pos} className={"btn " + (this.props.focused ? " focused" : "")} onClick={() => this.onClick()}></div>
+      <div style={this.props.pos} className={className} onClick={() => this.onClick()}></div>
     );
   }
 })

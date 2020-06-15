@@ -37,13 +37,13 @@ const App = () => {
     }
   });
 
-  let items = [[],[],[],[]], n=15;
+  let items = [[],[],[],[]], n=10;
   let sectorW = 400, sectorH = 300, padding = 30;
   for(let i=0;i<n;i++) {
-    items[0].push(<TestComponent focusLayers={[0]} focusStore={StoreFocus} pos={{left: padding+getRandomInt(sectorW-2*padding), top: padding+getRandomInt(sectorH-2*padding)}}/>);
-    items[1].push(<TestComponent focusLayers={[1]} focusStore={StoreFocus} pos={{left: padding+sectorW+getRandomInt(sectorW-2*padding), top: padding+getRandomInt(sectorH-2*padding)}}/>);
-    items[2].push(<TestComponent focusLayers={[2]} focusStore={StoreFocus} pos={{left: padding+sectorW+getRandomInt(sectorW-2*padding), top: padding+sectorH+getRandomInt(sectorH-2*padding)}}/>);
-    items[3].push(<TestComponent focusLayers={[3]} focusStore={StoreFocus} pos={{left: padding+getRandomInt(sectorW-2*padding), top: padding+sectorH+getRandomInt(sectorH-2*padding)}}/>);
+    items[0].push(<TestComponent focusLayers={[0]} focusStore={StoreFocus} defaultFocused={i===0} pos={{left: padding+getRandomInt(sectorW-2*padding), top: padding+getRandomInt(sectorH-2*padding)}}/>);
+    items[1].push(<TestComponent focusLayers={[1]} focusStore={StoreFocus} defaultFocused={i===0} pos={{left: padding+sectorW+getRandomInt(sectorW-2*padding), top: padding+getRandomInt(sectorH-2*padding)}}/>);
+    items[2].push(<TestComponent focusLayers={[2]} focusStore={StoreFocus} defaultFocused={i===0} pos={{left: padding+sectorW+getRandomInt(sectorW-2*padding), top: padding+sectorH+getRandomInt(sectorH-2*padding)}}/>);
+    items[3].push(<TestComponent focusLayers={[3]} focusStore={StoreFocus} defaultFocused={i===0} pos={{left: padding+getRandomInt(sectorW-2*padding), top: padding+sectorH+getRandomInt(sectorH-2*padding)}}/>);
   }
 
   StoreFocus.setFocusLayer(0);
@@ -56,24 +56,32 @@ const App = () => {
     <div>
       <div className="layers">
         <div className="layer layer-0-0">
+          1
           {items[0]}
         </div>
         <div className="layer layer-0-1">
+          2
           {items[1]}
         </div>
         <div className="layer layer-1-0">
+          3
           {items[2]}
         </div>
         <div className="layer layer-1-1">
+          4
           {items[3]}
         </div>
       </div>
       <div className="log">
-        sdfsdf
+        <ul>
+          <li>4 different focus layers</li>
+          <li>focus can move only between 1->2, 2->3, 3->4, 4->1 layers</li>
+          <li>red - is "default focused" component on the layer</li>
+        </ul>
 
       </div>
 
-      {/*{items}*/}
+
     </div>
   )
 }

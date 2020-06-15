@@ -20,16 +20,21 @@ code {
   width: 20px;
   height: 20px;
   background: burlywood;
-  border: 2px solid antiquewhite;
+  border: 3px solid antiquewhite;
 }
 
 .btn.focused {
-  border: 3px solid red;
+  border: 3px solid darkslateblue;
+}
+
+.btn.default-focused {
+  background: chocolate;
 }
 
 .log {
   width: 800px;
   background: antiquewhite;
+  font-size: 20px;
 }
 
 .layers {
@@ -40,10 +45,11 @@ code {
   width: 400px;
   height: 300px;
   float: left;
+  font-size: 60px;
 }
 
 .layer-0-0 {
-  background: aquamarine;
+  background: darksalmon;
 }
 
 .layer-0-1 {
@@ -55,5 +61,5 @@ code {
 }
 
 .layer-1-1 {
-  background: aquamarine;
+  background: darksalmon;
 }
