@@ -30,10 +30,10 @@ const App = () => {
     if(e.code === 'Enter')          StoreFocus.click();
 
     if(!moved) {
-      if(StoreFocus.currentFocusLayer === 0 && e.code === 'ArrowRight') StoreFocus.setFocusLayer(1);
-      if(StoreFocus.currentFocusLayer === 1 && e.code === 'ArrowDown')  StoreFocus.setFocusLayer(2);
-      if(StoreFocus.currentFocusLayer === 2 && e.code === 'ArrowLeft')  StoreFocus.setFocusLayer(3);
-      if(StoreFocus.currentFocusLayer === 3 && e.code === 'ArrowUp')    StoreFocus.setFocusLayer(0);
+      if(StoreFocus.currentFocusLayer === 0 && e.code === 'ArrowRight') StoreFocus.setCurrentFocusLayer(1);
+      if(StoreFocus.currentFocusLayer === 1 && e.code === 'ArrowDown')  StoreFocus.setCurrentFocusLayer(2);
+      if(StoreFocus.currentFocusLayer === 2 && e.code === 'ArrowLeft')  StoreFocus.setCurrentFocusLayer(3);
+      if(StoreFocus.currentFocusLayer === 3 && e.code === 'ArrowUp')    StoreFocus.setCurrentFocusLayer(0);
     }
   });
 
@@ -46,7 +46,7 @@ const App = () => {
     items[3].push(<TestComponent focusLayers={[3]} focusStore={StoreFocus} defaultFocused={i===0} pos={{left: padding+getRandomInt(sectorW-2*padding), top: padding+sectorH+getRandomInt(sectorH-2*padding)}}/>);
   }
 
-  StoreFocus.setFocusLayer(0);
+  StoreFocus.setCurrentFocusLayer(0);
 
   /*items.push(<TestComponent pos={{left: 500, top: 500}}/>);
   items.push(<TestComponent pos={{left: 900, top: 500}}/>);

@@ -33,7 +33,7 @@ export class StoreFocusBase {
     if(fLayers === null) {
       let defaultLayerKey = "default";
       this.focusLayers[defaultLayerKey] = [];
-      this.setFocusLayer(defaultLayerKey);
+      this.setCurrentFocusLayer(defaultLayerKey);
     } else
       fLayers.forEach(fl => this.focusLayers[fl] = []);
 
@@ -130,12 +130,12 @@ export class StoreFocusBase {
    * @param newValue
    * @param defaultFocus
    */
-  setFocusLayer(newValue = null, defaultFocus = FOCUS_LAYER_DEFAULT_FOCUS.DEFAULT) {
+  setCurrentFocusLayer(newValue = null, defaultFocus = FOCUS_LAYER_DEFAULT_FOCUS.DEFAULT) {
     //если передан пустой слой - значит нужен переход на последний активный слой
     if(newValue === null && this.previousFocusLayer !== null) {
       let gotoLayer = this.previousFocusLayer;
       this.previousFocusLayer = null;
-      this.setFocusLayer(gotoLayer, defaultFocus);
+      this.setCurrentFocusLayer(gotoLayer, defaultFocus);
       return;
     }
 
