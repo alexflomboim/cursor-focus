@@ -26,3 +26,34 @@ code {
 .btn.focused {
   border: 3px solid red;
 }
+
+.log {
+  width: 800px;
+  background: antiquewhite;
+}
+
+.layers {
+  width: 800px;
+}
+
+.layer {
+  width: 400px;
+  height: 300px;
+  float: left;
+}
+
+.layer-0-0 {
+  background: aquamarine;
+}
+
+.layer-0-1 {
+  background: darkkhaki;
+}
+
+.layer-1-0 {
+  background: darkkhaki;
+}
+
+.layer-1-1 {
+  background: aquamarine;
+}

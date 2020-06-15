@@ -22,6 +22,6 @@ const TestComponent = focusable(class TestComponent extends React.Component {
       <div style={this.props.pos} className={"btn " + (this.props.focused ? " focused" : "")} onClick={() => this.onClick()}></div>
     );
   }
-}, StoreFocus)
+})
 
 export default TestComponent;

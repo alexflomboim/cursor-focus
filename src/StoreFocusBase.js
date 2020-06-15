@@ -127,7 +127,7 @@ export class StoreFocusBase {
   /**
    * Устанавливает новый активный слой. Второй параметр определяет, какой фокусный элемент этого слоя будет зафокушен по-умолчанию:
    * дефолтовый или последний зафокушенный
-   * @param newValue - если передан NULL - будет автоматический перход на предыдущий фокусный слой
+   * @param newValue
    * @param defaultFocus
    */
   setFocusLayer(newValue = null, defaultFocus = FOCUS_LAYER_DEFAULT_FOCUS.DEFAULT) {
@@ -147,7 +147,8 @@ export class StoreFocusBase {
     if (defaultFocus === FOCUS_LAYER_DEFAULT_FOCUS.SAVED) {
       this._setCurrentFocused(this._getLayerFocused(this.currentFocusLayer));
     } else if (defaultFocus === FOCUS_LAYER_DEFAULT_FOCUS.DEFAULT) {
-      this._setCurrentFocused(null);
+      // Находим компонент, обозначенный как дефолтовый для фокуса в этом слое и фокусим его
+      this._setCurrentFocused(this._findDefaultFocused());
     }
   }
 
@@ -171,10 +172,6 @@ export class StoreFocusBase {
 
     //снимаем фокус с предыдущего
     if(this.currentFocused !== null)    this.currentFocused.setUnFocused();
-
-    // если передан null - это дефолтовая фокусировка после смены фокусного слоя.
-    // Находим компонент, обозначенный как дефолтовый для фокуса в этом слое и фокусим его
-    if(obj === null) obj = this._findDefaultFocused();
 
     //меняем элемент
     this.currentFocused = obj;
@@ -232,9 +229,11 @@ export class StoreFocusBase {
    * @private
    */
   _findDefaultFocused() {
+    console.log('_findDefaultFocused');
     let defaultFocused = null;
 
     this.focusLayers[this.currentFocusLayer].forEach(e => {
+      console.log('!!!');
       if(e.component.focusable() && e.component.defaultFocused())
         defaultFocused = e;
     })
