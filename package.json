@@ -2,7 +2,14 @@
   "name": "cursor-focus",
   "version": "3.0.0",
   "description": "React cursor focus library",
-  "keywords": ["focus", "cursor", "cursor focus", "react focus", "focusable", "focus component"],
+  "keywords": [
+    "focus",
+    "cursor",
+    "cursor focus",
+    "react focus",
+    "focusable",
+    "focus component"
+  ],
   "author": "alexflomboim",
   "license": "MIT",
   "repository": "alexflomboim/cursor-focus",
